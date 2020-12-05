@@ -3,7 +3,7 @@ db.movies_metadata.aggregate([
     $addFields: {
       budgetNumber: {
         $cond: {
-          if: { $in: ['$budget', ['', null, false]] },
+          if: { $in: ['$budget', ['', null, false, 'undefined']] },
           then: 'unknown',
           else: {
             $cond: {
@@ -41,15 +41,26 @@ db.movies_metadata.aggregate([
       rounded: {
         $cond: {
           if: { $isNumber: '$budgetNumber' },
-          then: { $round: ['$budgetNumber', -6] },
+          then: { $round: ['$budgetNumber', -7] },
           else: '$budgetNumber',
         },
       },
     },
   },
   {
+    $addFields: {
+      final: {
+        $cond: {
+          if: { $isNumber: '$rounded' },
+          then: '$rounded',
+          else: 'unknown',
+        },
+      },
+    },
+  },
+  {
     $group: {
-      _id: '$rounded',
+      _id: '$final',
       count: { $sum: 1 },
     },
   },
@@ -61,6 +72,6 @@ db.movies_metadata.aggregate([
     },
   },
   {
-    $sort: { count: -1 },
+    $sort: { budget: 1 },
   },
 ]);
